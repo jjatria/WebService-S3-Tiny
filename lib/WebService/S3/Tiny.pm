@@ -31,8 +31,7 @@ my $request = sub {
     # TODO This needs to come from the user.
     my %headers;
 
-    # FIXME We need to calculate this :-(
-    $headers{host} = 'localhost:9000';
+    $headers{host} = $self->{host} =~ s|^https?://||r;
 
     my ( $s, $m, $h, $d, $M, $y ) = gmtime;
 
