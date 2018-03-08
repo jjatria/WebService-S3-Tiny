@@ -1,8 +1,11 @@
+use strict;
+use warnings;
+
 BEGIN { *CORE::GLOBAL::gmtime = sub(;$) { CORE::gmtime(1440938160) } }
 
 use Data::Dumper;
 use HTTP::Request;
-use Test2::V0;
+use Test::More;
 use WebService::S3::Tiny;
 
 sub slurp($) { local ( @ARGV, $/ ) = @_; scalar <> }

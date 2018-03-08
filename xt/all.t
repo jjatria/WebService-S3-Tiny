@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 use Socket;
 use Test::More;
 use WebService::S3::Tiny;

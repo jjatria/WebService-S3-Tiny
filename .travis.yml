@@ -11,7 +11,7 @@ perl:
     - '5.16'
     - '5.14'
     - '5.12'
-install: cpanm -n --skip-satisfied Devel::Cover::Report::Coveralls
+install: cpanm -n --skip-satisfied Devel::Cover::Report::Coveralls HTTP::Request
 script:
     - PERL5OPT=-MDevel::Cover prove -lv t
     - ./run-xt
