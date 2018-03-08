@@ -13,5 +13,6 @@ perl:
     - '5.12'
 install: cpanm -n --skip-satisfied Devel::Cover::Report::Coveralls
 script:
+    - PERL5OPT=-MDevel::Cover prove -lv t
     - ./run-xt
 after_success: cover -report coveralls -select_re ^lib/
