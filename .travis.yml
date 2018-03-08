@@ -1,0 +1,17 @@
+language: perl
+services:
+    - docker
+sudo: required
+perl:
+    - '5.26'
+    - '5.24'
+    - '5.22'
+    - '5.20'
+    - '5.18'
+    - '5.16'
+    - '5.14'
+    - '5.12'
+install: cpanm -n --skip-satisfied Devel::Cover::Report::Coveralls
+script:
+    - ./run-xt
+after_success: cover -report coveralls -select_re ^lib/

@@ -26,6 +26,10 @@ sub new {
 my $request = sub {
     my ( $method, $self, $bucket, $object, $content ) = @_;
 
+    my $path = "/$bucket";
+
+    $path .= "/$object" if defined $object;
+
     $content //= '';
 
     # TODO This needs to come from the user.
@@ -43,7 +47,7 @@ my $request = sub {
 
     $headers{authorization} = $self->sign_request(
         $method,
-        my $path = "/$bucket/$object",
+        $path,
         {},
         \%headers,
         $content,
@@ -59,6 +63,8 @@ my $request = sub {
     );
 };
 
+sub add_bucket { unshift @_, 'PUT';    goto $request }
+sub del_bucket { unshift @_, 'DELETE'; goto $request }
 sub del_object { unshift @_, 'DELETE'; goto $request }
 sub get_object { unshift @_, 'GET';    goto $request }
 sub put_object { unshift @_, 'PUT';    goto $request }
