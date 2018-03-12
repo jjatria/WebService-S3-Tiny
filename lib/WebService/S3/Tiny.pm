@@ -65,9 +65,10 @@ my $request = sub {
 
 sub add_bucket { unshift @_, 'PUT';    goto $request }
 sub del_bucket { unshift @_, 'DELETE'; goto $request }
+
+sub add_object { unshift @_, 'PUT';    goto $request }
 sub del_object { unshift @_, 'DELETE'; goto $request }
 sub get_object { unshift @_, 'GET';    goto $request }
-sub put_object { unshift @_, 'PUT';    goto $request }
 
 sub sign_request {
     my ( $self, $method, $path, $query, $headers, $content ) = @_;

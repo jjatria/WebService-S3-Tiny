@@ -27,6 +27,25 @@ my $s3 = WebService::S3::Tiny->new(
 is $s3->add_bucket('bucket')->{status}, 200, 'add_bucket("bucket")';
 is $s3->add_bucket('bucket')->{status}, 409, 'add_bucket("bucket")';
 
+is $s3->add_object( 'bucket', 'object', 'foo' )->{status}, 200,
+    'add_object("bucket", "object", "foo")';
+
+is $s3->add_object( 'bucket', 'object', 'bar' )->{status}, 200,
+    'add_object("bucket", "object", "bar")';
+
+is $s3->get_object( 'bucket', 'object' )->{content}, 'bar',
+    'get_object("bucket", "object")';
+
+is $s3->get_object( 'bucket', 'object2' )->{status}, 404,
+    'get_object("bucket", "object2")';
+
+is $s3->del_object('bucket', 'object')->{status}, 204,
+    'del_bucket("bucket", "object")';
+
+is $s3->del_object('bucket', 'object')->{status}, 204,
+    'del_bucket("bucket", "object")';
+
 is $s3->del_bucket('bucket')->{status}, 204, 'del_bucket("bucket")';
+is $s3->del_bucket('bucket')->{status}, 404, 'del_bucket("bucket")';
 
 done_testing;
