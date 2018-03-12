@@ -82,10 +82,8 @@ sub request {
         $creq .= "\n$k:";
 
         $creq .= join ',',
-            map s/\s+/ /gr,
-            map s/^\s+|\s+$//gr,
-            map split(/\n/),
-            ref $v ? @$v : $v;
+            map s/\s+/ /gr =~ s/^\s+|\s+$//gr,
+            map split(/\n/), ref $v ? @$v : $v;
     }
 
     my $signed_headers = join ';', sort keys %$headers;
