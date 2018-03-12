@@ -7,9 +7,6 @@ use Carp;
 use Digest::SHA qw/hmac_sha256 hmac_sha256_hex sha256_hex/;
 use HTTP::Tiny;
 
-# TODO URI escape paths & query params.
-my %url_enc = map { chr, sprintf '%%%02X', $_ } 0..255;
-
 sub new {
     my ( $class, %args ) = @_;
 
@@ -128,6 +125,8 @@ sub _request {
     $creq .= "\n$sha";
 
     my $cred_scope = "$date/$self->{region}/$self->{service}/aws4_request";
+
+    utf8::encode $creq;
 
     my $sig = hmac_sha256_hex(
         "AWS4-HMAC-SHA256\n$time\n$cred_scope\n" . sha256_hex($creq),

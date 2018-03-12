@@ -31,9 +31,9 @@ chdir 't/aws';
 
 for (<{get,post}-*>) {
     # TODO
-    next if /utf8/;
+    next if $_ eq 'get-utf8';
 
-    my $foo = slurp "$_/$_.req";
+    utf8::decode my $foo = slurp "$_/$_.req";
 
     my ( $method, $path, $headers ) =
         $foo =~ m(^(GET|POST) (.+) HTTP/1.1\n(.+))s;
