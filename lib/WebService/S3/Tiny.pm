@@ -53,7 +53,8 @@ sub request {
     my ( $self, $method, $bucket, $object, $content, $headers, $query ) = @_;
 
     $headers //= {};
-    $query   //= {};
+
+    $query = HTTP::Tiny->www_form_urlencode( $query // {} );
 
     utf8::encode my $path = _normalize_path( join '/', '', $bucket, $object // () );
 
@@ -74,7 +75,7 @@ sub request {
     # Put requests must have the checksum header.
     $headers->{'x-amz-content-sha256'} //= $sha if $method eq 'PUT';
 
-    my $creq = "$method\n$path\n" . HTTP::Tiny->www_form_urlencode($query);
+    my $creq = "$method\n$path\n$query";
 
     for my $k ( sort keys %$headers ) {
         my $v = $headers->{$k};
@@ -118,8 +119,7 @@ sub request {
     delete $headers->{host};
 
     $self->{ua}->request(
-        $method,
-        "$self->{host}$path?" . HTTP::Tiny->www_form_urlencode($query),
+        $method => "$self->{host}$path?$query",
         { content => $content, headers => $headers },
     );
 }
