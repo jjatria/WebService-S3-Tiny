@@ -88,11 +88,9 @@ sub request {
             ref $v ? @$v : $v;
     }
 
-    $creq .= "\n\n";
+    my $signed_headers = join ';', sort keys %$headers;
 
-    $creq .= my $signed_headers = join ';', sort keys %$headers;
-
-    $creq .= "\n$sha";
+    $creq .= "\n\n$signed_headers\n$sha";
 
     my $cred_scope = "$date/$self->{region}/$self->{service}/aws4_request";
 
