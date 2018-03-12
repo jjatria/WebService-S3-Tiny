@@ -75,25 +75,23 @@ sub request {
     # Put requests must have the checksum header.
     $headers->{'x-amz-content-sha256'} //= $sha if $method eq 'PUT';
 
-    my $creq = "$method\n$path\n$query";
+    my $creq_headers = '';
 
     for my $k ( sort keys %$headers ) {
         my $v = $headers->{$k};
 
-        $creq .= "\n$k:";
+        $creq_headers .= "\n$k:";
 
-        $creq .= join ',',
+        $creq_headers .= join ',',
             map s/\s+/ /gr =~ s/^\s+|\s+$//gr,
             map split(/\n/), ref $v ? @$v : $v;
     }
 
     my $signed_headers = join ';', sort keys %$headers;
 
-    $creq .= "\n\n$signed_headers\n$sha";
+    utf8::encode my $creq = "$method\n$path\n$query$creq_headers\n\n$signed_headers\n$sha";
 
     my $cred_scope = "$date/$self->{region}/$self->{service}/aws4_request";
-
-    utf8::encode $creq;
 
     my $sig = hmac_sha256_hex(
         "AWS4-HMAC-SHA256\n$time\n$cred_scope\n" . sha256_hex($creq),
