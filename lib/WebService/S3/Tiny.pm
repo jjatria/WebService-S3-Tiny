@@ -72,7 +72,7 @@ sub request {
     my $sha = $headers->{'x-amz-content-sha256'} // sha256_hex $content // '';
 
     # Put requests must have the checksum header.
-    $headers->{'x-amz-content-sha256'} = $sha if $method eq 'PUT';
+    $headers->{'x-amz-content-sha256'} //= $sha if $method eq 'PUT';
 
     my $creq = "$method\n$path\n" . HTTP::Tiny->www_form_urlencode($query);
 
