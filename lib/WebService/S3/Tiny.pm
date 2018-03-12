@@ -7,6 +7,8 @@ use Carp;
 use Digest::SHA qw/hmac_sha256 hmac_sha256_hex sha256_hex/;
 use HTTP::Tiny;
 
+my %url_enc = map { chr, sprintf '%%%02X', $_ } 0..255;
+
 sub new {
     my ( $class, %args ) = @_;
 
@@ -84,10 +86,9 @@ sub _request {
     $headers //= {};
     $query   //= {};
 
-    my $path = _normalize_path( join '/', '', $bucket, $object // () );
+    utf8::encode my $path = _normalize_path( join '/', '', $bucket, $object // () );
 
-    # FIXME Quick fix for the aws.t
-    $path =~ s/ /%20/;
+    $path =~ s|([^A-Za-z0-9\-\._~/])|$url_enc{$1}|g;
 
     $headers->{host} = $self->{host} =~ s|^https?://||r;
 

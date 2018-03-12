@@ -30,9 +30,6 @@ my $s3 = WebService::S3::Tiny->new(
 chdir 't/aws';
 
 for (<{get,post}-*>) {
-    # TODO
-    next if $_ eq 'get-utf8';
-
     utf8::decode my $foo = slurp "$_/$_.req";
 
     my ( $method, $path, $headers ) =
