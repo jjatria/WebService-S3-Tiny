@@ -24,7 +24,7 @@ sub new {
 }
 
 my $request = sub {
-    my ( $method, $self, $bucket, $object, $content ) = @_;
+    my ( $method, $self, $bucket, $object, $content, $query ) = @_;
 
     my $path = "/$bucket";
 
@@ -48,7 +48,7 @@ my $request = sub {
     $headers{authorization} = $self->sign_request(
         $method,
         $path,
-        {},
+        $query //= {},
         \%headers,
         $content,
     );
@@ -58,17 +58,51 @@ my $request = sub {
     delete $headers{host};
 
     $self->{ua}->request(
-        $method => $self->{host} . $path,
+        $method,
+        "$self->{host}$path?" . HTTP::Tiny->www_form_urlencode($query),
         { content => $content, headers => \%headers },
     );
 };
 
-sub add_bucket { unshift @_, 'PUT';    goto $request }
-sub del_bucket { unshift @_, 'DELETE'; goto $request }
+sub add_bucket {
+    my ( $self, $bucket ) = @_;
 
-sub add_object { unshift @_, 'PUT';    goto $request }
-sub del_object { unshift @_, 'DELETE'; goto $request }
-sub get_object { unshift @_, 'GET';    goto $request }
+    $request->( 'PUT', $self, $bucket );
+}
+
+sub del_bucket {
+    my ( $self, $bucket ) = @_;
+
+    $request->( 'DELETE', $self, $bucket );
+}
+
+sub get_bucket {
+    my ( $self, $bucket, %query ) = @_;
+
+    # Use the recommended API version.
+    # https://docs.aws.amazon.com/AmazonS3/latest/API/v2-RESTBucketGET.html
+    $query{'list-type'} = 2;
+
+    $request->( 'GET', $self, $bucket, undef, undef, \%query );
+}
+
+sub add_object {
+    my ( $self, $bucket, $object, $content ) = @_;
+
+    $request->( 'PUT', $self, $bucket, $object, $content );
+}
+
+sub del_object {
+    my ( $self, $bucket, $object ) = @_;
+
+    $request->( 'DELETE', $self, $bucket, $object );
+}
+
+sub get_object {
+    my ( $self, $bucket, $object ) = @_;
+
+    $request->( 'GET', $self, $bucket, $object );
+}
 
 sub sign_request {
     my ( $self, $method, $path, $query, $headers, $content ) = @_;
@@ -80,13 +114,7 @@ sub sign_request {
     # FIXME Quick fix for the aws.t
     $path =~ s/ /%20/;
 
-    my $creq = "$method\n$path\n";
-
-    for my $k ( sort keys %$query ) {
-        $creq .= "$k=$_&" for sort @{ $query->{$k} };
-    }
-
-    $creq =~ s/&$//;
+    my $creq = "$method\n$path\n" . HTTP::Tiny->www_form_urlencode($query);
 
     for my $k ( sort keys %$headers ) {
         my $v = $headers->{$k};

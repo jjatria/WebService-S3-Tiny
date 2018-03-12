@@ -39,6 +39,9 @@ is $s3->get_object( 'bucket', 'object' )->{content}, 'bar',
 is $s3->get_object( 'bucket', 'object2' )->{status}, 404,
     'get_object("bucket", "object2")';
 
+like $s3->get_bucket('bucket')->{content}, qr(<Key>object</Key>),
+    'get_bucket("bucket")';
+
 is $s3->del_object('bucket', 'object')->{status}, 204,
     'del_bucket("bucket", "object")';
 
