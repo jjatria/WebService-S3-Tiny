@@ -87,11 +87,7 @@ sub _request {
     $headers //= {};
     $query   //= {};
 
-    my $path = "/$bucket";
-
-    $path .= "/$object" if defined $object;
-
-    $path = _normalize_path($path);
+    my $path = _normalize_path( join '/', '', $bucket, $object // () );
 
     # FIXME Quick fix for the aws.t
     $path =~ s/ /%20/;
