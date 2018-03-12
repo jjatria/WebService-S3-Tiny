@@ -31,24 +31,6 @@ sub    get_object { $_[0]->request( 'GET',    $_[1], $_[2], undef, $_[3], $_[4] 
 sub   head_object { $_[0]->request( 'HEAD',   $_[1], $_[2], undef, $_[3]        ) }
 sub    put_object { $_[0]->request( 'PUT',    $_[1], $_[2], $_[3], $_[4]        ) }
 
-sub _normalize_path {
-    my @old_parts = split m(/), $_[0], -1;
-    my @new_parts;
-
-    for ( 0 .. $#old_parts ) {
-        my $part = $old_parts[$_];
-
-        if ( $part eq '..' ) {
-            pop @new_parts;
-        }
-        elsif ( $part ne '.' && ( length $part || $_ == $#old_parts ) ) {
-            push @new_parts, $part;
-        }
-    }
-
-    '/' . join '/', @new_parts;
-}
-
 sub request {
     my ( $self, $method, $bucket, $object, $content, $headers, $query ) = @_;
 
@@ -120,6 +102,24 @@ sub request {
         $method => "$self->{host}$path?$query",
         { content => $content, headers => $headers },
     );
+}
+
+sub _normalize_path {
+    my @old_parts = split m(/), $_[0], -1;
+    my @new_parts;
+
+    for ( 0 .. $#old_parts ) {
+        my $part = $old_parts[$_];
+
+        if ( $part eq '..' ) {
+            pop @new_parts;
+        }
+        elsif ( $part ne '.' && ( length $part || $_ == $#old_parts ) ) {
+            push @new_parts, $part;
+        }
+    }
+
+    '/' . join '/', @new_parts;
 }
 
 1;
