@@ -24,14 +24,14 @@ my $s3 = WebService::S3::Tiny->new(
     secret_key => 'secret_key',
 );
 
-is $s3->add_bucket('bucket')->{status}, 200, 'add_bucket("bucket")';
-is $s3->add_bucket('bucket')->{status}, 409, 'add_bucket("bucket")';
+is $s3->put_bucket('bucket')->{status}, 200, 'put_bucket("bucket")';
+is $s3->put_bucket('bucket')->{status}, 409, 'put_bucket("bucket")';
 
-is $s3->add_object( 'bucket', 'object', 'foo' )->{status}, 200,
-    'add_object("bucket", "object", "foo")';
+is $s3->put_object( 'bucket', 'object', 'foo' )->{status}, 200,
+    'put_object("bucket", "object", "foo")';
 
-is $s3->add_object( 'bucket', 'object', 'bar' )->{status}, 200,
-    'add_object("bucket", "object", "bar")';
+is $s3->put_object( 'bucket', 'object', 'bar' )->{status}, 200,
+    'put_object("bucket", "object", "bar")';
 
 is $s3->get_object( 'bucket', 'object' )->{content}, 'bar',
     'get_object("bucket", "object")';
@@ -42,13 +42,16 @@ is $s3->get_object( 'bucket', 'object2' )->{status}, 404,
 like $s3->get_bucket('bucket')->{content}, qr(<Key>object</Key>),
     'get_bucket("bucket")';
 
-is $s3->del_object('bucket', 'object')->{status}, 204,
-    'del_bucket("bucket", "object")';
+like $s3->get_bucket( 'bucket', {}, { 'list-type' => 2 } )->{content}, qr(<Key>object</Key>),
+    'get_bucket("bucket", {}, { "list-type" => 2 })';
 
-is $s3->del_object('bucket', 'object')->{status}, 204,
-    'del_bucket("bucket", "object")';
+is $s3->delete_object('bucket', 'object')->{status}, 204,
+    'delete_bucket("bucket", "object")';
 
-is $s3->del_bucket('bucket')->{status}, 204, 'del_bucket("bucket")';
-is $s3->del_bucket('bucket')->{status}, 404, 'del_bucket("bucket")';
+is $s3->delete_object('bucket', 'object')->{status}, 204,
+    'delete_bucket("bucket", "object")';
+
+is $s3->delete_bucket('bucket')->{status}, 204, 'delete_bucket("bucket")';
+is $s3->delete_bucket('bucket')->{status}, 404, 'delete_bucket("bucket")';
 
 done_testing;

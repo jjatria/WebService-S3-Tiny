@@ -52,13 +52,13 @@ for (<{get,post}-*>) {
 
     delete $headers{'::std_case'};
 
-    $s3->_request(
+    $s3->request(
         $req->method,
         $path,
         undef,
         $req->content,
-        \%query,
         \%headers,
+        \%query,
     );
 
     is $authorization, slurp "$_/$_.authz", $_;

@@ -22,45 +22,14 @@ sub new {
     bless \%args, $class;
 }
 
-sub add_bucket {
-    my ( $self, $bucket ) = @_;
-
-    $self->_request( 'PUT', $bucket );
-}
-
-sub del_bucket {
-    my ( $self, $bucket ) = @_;
-
-    $self->_request( 'DELETE', $bucket );
-}
-
-sub get_bucket {
-    my ( $self, $bucket, %query ) = @_;
-
-    # Use the recommended API version.
-    # https://docs.aws.amazon.com/AmazonS3/latest/API/v2-RESTBucketGET.html
-    $query{'list-type'} = 2;
-
-    $self->_request( 'GET', $bucket, undef, undef, \%query );
-}
-
-sub add_object {
-    my ( $self, $bucket, $object, $content ) = @_;
-
-    $self->_request( 'PUT', $bucket, $object, $content );
-}
-
-sub del_object {
-    my ( $self, $bucket, $object ) = @_;
-
-    $self->_request( 'DELETE', $bucket, $object );
-}
-
-sub get_object {
-    my ( $self, $bucket, $object ) = @_;
-
-    $self->_request( 'GET', $bucket, $object );
-}
+sub delete_bucket { $_[0]->request( 'DELETE', $_[1], undef, undef, $_[2]        ) }
+sub    get_bucket { $_[0]->request( 'GET',    $_[1], undef, undef, $_[2], $_[3] ) }
+sub   head_bucket { $_[0]->request( 'HEAD',   $_[1], undef, undef, $_[2]        ) }
+sub    put_bucket { $_[0]->request( 'PUT',    $_[1], undef, undef, $_[2]        ) }
+sub delete_object { $_[0]->request( 'DELETE', $_[1], $_[2], undef, $_[3]        ) }
+sub    get_object { $_[0]->request( 'GET',    $_[1], $_[2], undef, $_[3], $_[4] ) }
+sub   head_object { $_[0]->request( 'HEAD',   $_[1], $_[2], undef, $_[3]        ) }
+sub    put_object { $_[0]->request( 'PUT',    $_[1], $_[2], $_[3], $_[4]        ) }
 
 sub _normalize_path {
     my @old_parts = split m(/), $_[0], -1;
@@ -80,8 +49,8 @@ sub _normalize_path {
     '/' . join '/', @new_parts;
 }
 
-sub _request {
-    my ( $self, $method, $bucket, $object, $content, $query, $headers ) = @_;
+sub request {
+    my ( $self, $method, $bucket, $object, $content, $headers, $query ) = @_;
 
     $headers //= {};
     $query   //= {};
