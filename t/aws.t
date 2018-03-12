@@ -8,6 +8,15 @@ use HTTP::Request;
 use Test::More;
 use WebService::S3::Tiny;
 
+my $authorization;
+
+{
+    no warnings 'redefine';
+
+    *HTTP::Tiny::request
+        = sub { $authorization = $_[3]{headers}{authorization} };
+}
+
 sub slurp($) { local ( @ARGV, $/ ) = @_; scalar <> }
 
 my $s3 = WebService::S3::Tiny->new(
@@ -47,13 +56,16 @@ for (<{get,post}-*>) {
 
     delete $headers{'::std_case'};
 
-    is $s3->sign_request(
+    $s3->_request(
         $req->method,
         $path,
+        undef,
+        $req->content,
         \%query,
         \%headers,
-        $req->content,
-    ) => slurp "$_/$_.authz", $_;
+    );
+
+    is $authorization, slurp "$_/$_.authz", $_;
 }
 
 done_testing;

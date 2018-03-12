@@ -134,7 +134,7 @@ sub _normalize_path {
 }
 
 sub _request {
-    my ( $self, $method, $bucket, $object, $content, $query ) = @_;
+    my ( $self, $method, $bucket, $object, $content, $query, $headers ) = @_;
 
     my $path = "/$bucket";
 
@@ -142,8 +142,7 @@ sub _request {
 
     $content //= '';
 
-    # TODO This needs to come from the user.
-    my %headers;
+    my %headers = %{ $headers // {} };
 
     $headers{host} = $self->{host} =~ s|^https?://||r;
 
@@ -153,7 +152,8 @@ sub _request {
         $y + 1900, $M + 1, $d, $h, $m, $s;
 
     # Let the user pass their own checksums if they have them.
-    $headers{'x-amz-content-sha256'} //= sha256_hex $content;
+    $headers{'x-amz-content-sha256'} //= sha256_hex $content
+        if $method eq 'PUT';
 
     $headers{authorization} = $self->sign_request(
         $method,
