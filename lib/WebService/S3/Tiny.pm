@@ -23,57 +23,16 @@ sub new {
     bless \%args, $class;
 }
 
-my $request = sub {
-    my ( $method, $self, $bucket, $object, $content, $query ) = @_;
-
-    my $path = "/$bucket";
-
-    $path .= "/$object" if defined $object;
-
-    $content //= '';
-
-    # TODO This needs to come from the user.
-    my %headers;
-
-    $headers{host} = $self->{host} =~ s|^https?://||r;
-
-    my ( $s, $m, $h, $d, $M, $y ) = gmtime;
-
-    $headers{'x-amz-date'} = sprintf '%d%02d%02dT%02d%02d%02dZ',
-        $y + 1900, $M + 1, $d, $h, $m, $s;
-
-    # Let the user pass their own checksums if they have them.
-    $headers{'x-amz-content-sha256'} //= sha256_hex $content;
-
-    $headers{authorization} = $self->sign_request(
-        $method,
-        $path,
-        $query //= {},
-        \%headers,
-        $content,
-    );
-
-    # HTTP::Tiny doesn't like us providing our own host header, but we have to
-    # sign it, so let's hope HTTP::Tiny calculates the same value as us :-S
-    delete $headers{host};
-
-    $self->{ua}->request(
-        $method,
-        "$self->{host}$path?" . HTTP::Tiny->www_form_urlencode($query),
-        { content => $content, headers => \%headers },
-    );
-};
-
 sub add_bucket {
     my ( $self, $bucket ) = @_;
 
-    $request->( 'PUT', $self, $bucket );
+    $self->_request( 'PUT', $bucket );
 }
 
 sub del_bucket {
     my ( $self, $bucket ) = @_;
 
-    $request->( 'DELETE', $self, $bucket );
+    $self->_request( 'DELETE', $bucket );
 }
 
 sub get_bucket {
@@ -83,25 +42,25 @@ sub get_bucket {
     # https://docs.aws.amazon.com/AmazonS3/latest/API/v2-RESTBucketGET.html
     $query{'list-type'} = 2;
 
-    $request->( 'GET', $self, $bucket, undef, undef, \%query );
+    $self->_request( 'GET', $bucket, undef, undef, \%query );
 }
 
 sub add_object {
     my ( $self, $bucket, $object, $content ) = @_;
 
-    $request->( 'PUT', $self, $bucket, $object, $content );
+    $self->_request( 'PUT', $bucket, $object, $content );
 }
 
 sub del_object {
     my ( $self, $bucket, $object ) = @_;
 
-    $request->( 'DELETE', $self, $bucket, $object );
+    $self->_request( 'DELETE', $bucket, $object );
 }
 
 sub get_object {
     my ( $self, $bucket, $object ) = @_;
 
-    $request->( 'GET', $self, $bucket, $object );
+    $self->_request( 'GET', $bucket, $object );
 }
 
 sub sign_request {
@@ -172,6 +131,47 @@ sub _normalize_path {
     }
 
     '/' . join '/', @new_parts;
+}
+
+sub _request {
+    my ( $self, $method, $bucket, $object, $content, $query ) = @_;
+
+    my $path = "/$bucket";
+
+    $path .= "/$object" if defined $object;
+
+    $content //= '';
+
+    # TODO This needs to come from the user.
+    my %headers;
+
+    $headers{host} = $self->{host} =~ s|^https?://||r;
+
+    my ( $s, $m, $h, $d, $M, $y ) = gmtime;
+
+    $headers{'x-amz-date'} = sprintf '%d%02d%02dT%02d%02d%02dZ',
+        $y + 1900, $M + 1, $d, $h, $m, $s;
+
+    # Let the user pass their own checksums if they have them.
+    $headers{'x-amz-content-sha256'} //= sha256_hex $content;
+
+    $headers{authorization} = $self->sign_request(
+        $method,
+        $path,
+        $query //= {},
+        \%headers,
+        $content,
+    );
+
+    # HTTP::Tiny doesn't like us providing our own host header, but we have to
+    # sign it, so let's hope HTTP::Tiny calculates the same value as us :-S
+    delete $headers{host};
+
+    $self->{ua}->request(
+        $method,
+        "$self->{host}$path?" . HTTP::Tiny->www_form_urlencode($query),
+        { content => $content, headers => \%headers },
+    );
 }
 
 1;
