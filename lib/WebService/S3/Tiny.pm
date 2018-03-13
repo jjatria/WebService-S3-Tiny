@@ -51,11 +51,8 @@ sub request {
 
     my $date = substr $time, 0, 8;
 
-    # Let the user pass their own checksums if they have them.
-    my $sha = $headers->{'x-amz-content-sha256'} // sha256_hex $content // '';
-
-    # Put requests must have the checksum header.
-    $headers->{'x-amz-content-sha256'} //= $sha if $method eq 'PUT';
+    # Prefer user supplied checksums.
+    my $sha = $headers->{'x-amz-content-sha256'} //= sha256_hex $content // '';
 
     my $creq_headers = '';
 
