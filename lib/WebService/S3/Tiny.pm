@@ -36,6 +36,9 @@ sub request {
 
     $headers //= {};
 
+    # Lowercase header keys.
+    %$headers = map { lc, $headers->{$_} } keys %$headers;
+
     $query = HTTP::Tiny->www_form_urlencode( $query // {} );
 
     utf8::encode my $path = _normalize_path( join '/', '', $bucket, $object // () );
