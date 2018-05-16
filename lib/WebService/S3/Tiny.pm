@@ -1,4 +1,4 @@
-package WebService::S3::Tiny 0.001;
+package WebService::S3::Tiny 0.002;
 
 use strict;
 use warnings;
