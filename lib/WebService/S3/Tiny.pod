@@ -93,6 +93,10 @@ WebService::S3::Tiny - Perl module for using S3 or compatible APIs
 
  $s3->request($method, $bucket, $object, $content, \%headers, \%parameters);
 
+=head2 signed_url
+
+ $s3->signed_url($bucket, $key, $expires);
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2018 CV-Library Ltd.

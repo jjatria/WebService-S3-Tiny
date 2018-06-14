@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
-use Digest::SHA qw/hmac_sha256 hmac_sha256_hex sha256_hex/;
+use Digest::SHA qw/hmac_sha256 hmac_sha256_hex sha256_hex hmac_sha1_base64/;
 use HTTP::Tiny 0.014;
 
 my %url_enc = map { chr, sprintf '%%%02X', $_ } 0..255;
@@ -102,6 +102,30 @@ sub request {
         $method => "$self->{host}$path?$query",
         { content => $content, headers => $headers },
     );
+}
+
+sub signed_url {
+    my ($self, $bucket, $key, $expires ) = @_;
+    $expires ||= time + 3600;
+
+    utf8::encode my $path = _normalize_path( join '/', '', $key );
+    $path =~ s|([^A-Za-z0-9\-\._~/])|$url_enc{$1}|g;
+
+    my $uri = $self->{host} =~ s|(^https?://)|$1$bucket.|r . $path;
+
+    my $req = "GET\n\n\n"
+        . $expires . "\n/"
+        . $bucket  . "/"
+        . $key;
+
+    my $signature = hmac_sha1_base64( $req, $self->{secret_key} );
+    # Escape forward slashes as well
+    $signature =~ s|([^A-Za-z0-9\-\._~])|$url_enc{$1}|g;
+
+    return $uri
+        . '?AWSAccessKeyId=' . $self->{access_key}
+        . '&Expires='        . $expires
+        . '&Signature='      . $signature;
 }
 
 sub _normalize_path {
