@@ -32,30 +32,89 @@ sub   head_object { $_[0]->request( 'HEAD',   $_[1], $_[2], undef, $_[3]        
 sub    put_object { $_[0]->request( 'PUT',    $_[1], $_[2], $_[3], $_[4]        ) }
 
 sub request {
+    my $self = shift;
+    my ( $method, $bucket, $object, $content, $head, $query ) = @_;
+
+    my ( $path, $scope, $headers, $signature, $signed_headers )
+        = $self->_prepare( @_ );
+
+    $headers->{authorization} = join(
+        ', ',
+        "AWS4-HMAC-SHA256 Credential=$self->{access_key}/$scope",
+        "SignedHeaders=$signed_headers",
+        "Signature=$signature",
+    );
+
+    # HTTP::Tiny doesn't like us providing our own host header, but we have to
+    # sign it, so let's hope HTTP::Tiny calculates the same value as us :-S
+    delete $headers->{host};
+
+    my $params = HTTP::Tiny->www_form_urlencode( $query // {} );
+
+    $self->{ua}->request(
+        $method => "$self->{host}$path?$params",
+        { content => $content, headers => $headers },
+    );
+}
+
+sub signed_url {
+    my $self = shift;
+    $DB::single = 1;
+    my ( $method, $bucket, $object, $content, $h, $q, $expires ) = @_;
+    $expires ||= 3600;
+
+    my ( $path, $scope, $headers, $signature, $signed_headers )
+        = $self->_prepare( $method, $bucket, $object, $content, {}, $q, $expires );
+
+    $signature =~ s|([^A-Za-z0-9\-\._~])|$url_enc{$1}|g;
+
+    my $query = $q // {};
+    $query->{'X-Amz-Algorithm'}     = 'AWS4-HMAC-SHA256';
+    $query->{'X-Amz-Credential'}    = "$self->{access_key}/$scope";
+    $query->{'X-Amz-Date'}          = $headers->{'x-amz-date'};
+    $query->{'X-Amz-Expires'}       = $expires;
+    $query->{'X-Amz-SignedHeaders'} = $signed_headers;
+    $query->{'X-Amz-Signature'}     = $signature;
+
+    my $params = HTTP::Tiny->www_form_urlencode( $query // {} );
+
+    return "$self->{host}$path?$params",
+}
+
+sub _prepare {
     my ( $self, $method, $bucket, $object, $content, $headers, $query ) = @_;
+
+    utf8::encode my $path = _normalize_path( join '/', '', $bucket, $object // () );
+
+    $path =~ s|([^A-Za-z0-9\-\._~/])|$url_enc{$1}|g;
+
+    # Prefer user supplied checksums.
+    my $sha = $headers->{'x-amz-content-sha256'} //= sha256_hex $content // '';
+
+    my ( $request, $signed_headers );
+
+    ( $request, $headers, $signed_headers )
+        = $self->_build_request( $method, $path, $sha, $headers, $query );
+
+    my $time = $headers->{'x-amz-date'};
+    my $date = substr $time, 0, 8;
+
+    my $scope = "$date/$self->{region}/$self->{service}/aws4_request";
+
+    my $signature = $self->_sign_request( $request, $time, $date, $scope );
+
+    return ( $path, $scope, $headers, $signature, $signed_headers );
+}
+
+sub _build_request {
+    my ( $self, $method, $path, $sha, $headers, $query ) = @_;
 
     $headers //= {};
 
     # Lowercase header keys.
     %$headers = map { lc, $headers->{$_} } keys %$headers;
 
-    $query = HTTP::Tiny->www_form_urlencode( $query // {} );
-
-    utf8::encode my $path = _normalize_path( join '/', '', $bucket, $object // () );
-
-    $path =~ s|([^A-Za-z0-9\-\._~/])|$url_enc{$1}|g;
-
     $headers->{host} = $self->{host} =~ s|^https?://||r;
-
-    my ( $s, $m, $h, $d, $M, $y ) = gmtime;
-
-    my $time = $headers->{'x-amz-date'} = sprintf '%d%02d%02dT%02d%02d%02dZ',
-        $y + 1900, $M + 1, $d, $h, $m, $s;
-
-    my $date = substr $time, 0, 8;
-
-    # Prefer user supplied checksums.
-    my $sha = $headers->{'x-amz-content-sha256'} //= sha256_hex $content // '';
 
     my $creq_headers = '';
 
@@ -69,14 +128,35 @@ sub request {
             map split(/\n/), ref $v ? @$v : $v;
     }
 
+    my ( $s, $m, $h, $d, $M, $y ) = gmtime;
+    $headers->{'x-amz-date'} = sprintf '%d%02d%02dT%02d%02d%02dZ',
+        $y + 1900, $M + 1, $d, $h, $m, $s;
+
     my $signed_headers = join ';', sort keys %$headers;
 
-    utf8::encode my $creq = "$method\n$path\n$query$creq_headers\n\n$signed_headers\n$sha";
+    my $params = HTTP::Tiny->www_form_urlencode( $query // {} );
 
-    my $cred_scope = "$date/$self->{region}/$self->{service}/aws4_request";
+    utf8::encode my $creq = "$method\n$path\n$params$creq_headers\n\n$signed_headers\n$sha";
 
-    my $sig = hmac_sha256_hex(
-        "AWS4-HMAC-SHA256\n$time\n$cred_scope\n" . sha256_hex($creq),
+    return ( $creq, $headers, $signed_headers );
+}
+
+sub _sign_request {
+    my ( $self, $request, $time, $date, $scope ) = @_;
+
+    unless ($time) {
+        my ( $s, $m, $h, $d, $M, $y ) = gmtime;
+
+        $time = sprintf '%d%02d%02dT%02d%02d%02dZ',
+            $y + 1900, $M + 1, $d, $h, $m, $s;
+    }
+
+    $date //= substr $time, 0, 8;
+
+    $scope //= "$date/$self->{region}/$self->{service}/aws4_request";
+
+    return hmac_sha256_hex(
+        "AWS4-HMAC-SHA256\n$time\n$scope\n" . sha256_hex($request),
         hmac_sha256(
             aws4_request => hmac_sha256(
                 $self->{service} => hmac_sha256(
@@ -86,46 +166,6 @@ sub request {
             ),
         ),
     );
-
-    $headers->{authorization} = join(
-        ', ',
-        "AWS4-HMAC-SHA256 Credential=$self->{access_key}/$cred_scope",
-        "SignedHeaders=$signed_headers",
-        "Signature=$sig",
-    );
-
-    # HTTP::Tiny doesn't like us providing our own host header, but we have to
-    # sign it, so let's hope HTTP::Tiny calculates the same value as us :-S
-    delete $headers->{host};
-
-    $self->{ua}->request(
-        $method => "$self->{host}$path?$query",
-        { content => $content, headers => $headers },
-    );
-}
-
-sub signed_url {
-    my ($self, $bucket, $key, $expires ) = @_;
-    $expires ||= time + 3600;
-
-    utf8::encode my $path = _normalize_path( join '/', '', $key );
-    $path =~ s|([^A-Za-z0-9\-\._~/])|$url_enc{$1}|g;
-
-    my $uri = $self->{host} =~ s|(^https?://)|$1$bucket.|r . $path;
-
-    my $req = "GET\n\n\n"
-        . $expires . "\n/"
-        . $bucket  . "/"
-        . $key;
-
-    my $signature = hmac_sha1_base64( $req, $self->{secret_key} );
-    # Escape forward slashes as well
-    $signature =~ s|([^A-Za-z0-9\-\._~])|$url_enc{$1}|g;
-
-    return $uri
-        . '?AWSAccessKeyId=' . $self->{access_key}
-        . '&Expires='        . $expires
-        . '&Signature='      . $signature;
 }
 
 sub _normalize_path {

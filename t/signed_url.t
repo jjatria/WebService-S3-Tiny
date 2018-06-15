@@ -12,6 +12,7 @@ my $s3 = WebService::S3::Tiny->new(
 
 is +$s3->signed_url( 'maibucket', 'path/to/my+image.jpg', 1406712744 ),
     'http://maibucket.s3.baz.com/path/to/my%2Bimage.jpg?AWSAccessKeyId=foo&Expires=1406712744&Signature=%2BEfymm%2BhjUfRLdQ3bS%2FJWrg9dc0',
-    'signed_uri';
+    http://maibucket.s3.baz.com/path/to/my%2Bimage.jpg?AWSAccessKeyId=foo&Expires=1406712744&Signature=%2BEfymm%2BhjUfRLdQ3bS%2FJWrg9dc0%3D
+'signed_uri';
 
 done_testing;
