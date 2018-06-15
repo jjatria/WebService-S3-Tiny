@@ -30,6 +30,15 @@ WebService::S3::Tiny - Perl module for using S3 or compatible APIs
 
 =head1 METHODS
 
+All the request methods of the form {get,put,delete,head}_{bucket,object} can
+also be called with the C<_url> suffix to generate a pre-signed URL for the
+corresponding call.
+
+These URL methods take almost the same arguments as their request counterparts,
+with the difference that they do not take a C<content> argument, and take a
+final optional argument to indicate the lifetime of the URL in seconds.
+This value cannot be longer than 604800 (= one week).
+
 =head2 new
 
  WebDriver::S3::Tiny->new(
@@ -92,6 +101,10 @@ WebService::S3::Tiny - Perl module for using S3 or compatible APIs
 =head2 request
 
  $s3->request($method, $bucket, $object, $content, \%headers, \%parameters);
+
+=head2 signed_url
+
+ $s3->signed_url($method, $bucket, $object, $content, \%headers, \%parameters, $expires);
 
 =head1 COPYRIGHT AND LICENSE
 
