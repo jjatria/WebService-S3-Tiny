@@ -47,36 +47,36 @@ is_deeply +$s3->put_object('bucket', 'object', 'content', 'headers'),
 
 # Signed URL methods
 
-is_deeply +$s3->delete_bucket_url('bucket', 'headers', 'expires'),
-    [ $s3, 'DELETE', 'bucket', undef, 'headers', undef, 'expires' ],
+is_deeply +$s3->delete_bucket_url('bucket', 'expires', 'headers', ),
+    [ $s3, 'DELETE', 'bucket', undef, 'expires', 'headers' ],
     'delete_bucket_url';
 
-is_deeply +$s3->get_bucket_url('bucket', 'headers', 'parameters', 'expires'),
-    [ $s3, 'GET', 'bucket', undef, 'headers', 'parameters', 'expires' ],
+is_deeply +$s3->get_bucket_url('bucket', 'expires', 'headers', 'parameters'),
+    [ $s3, 'GET', 'bucket', undef, 'expires', 'headers', 'parameters' ],
     'get_bucket_url';
 
-is_deeply +$s3->head_bucket_url('bucket', 'headers', 'expires'),
-    [ $s3, 'HEAD', 'bucket', undef, 'headers', undef, 'expires' ],
+is_deeply +$s3->head_bucket_url('bucket', 'expires', 'headers'),
+    [ $s3, 'HEAD', 'bucket', undef, 'expires', 'headers' ],
     'head_bucket_url';
 
-is_deeply +$s3->put_bucket_url('bucket', 'headers', 'expires'),
-    [ $s3, 'PUT', 'bucket', undef, 'headers', undef, 'expires' ],
+is_deeply +$s3->put_bucket_url('bucket', 'expires', 'headers'),
+    [ $s3, 'PUT', 'bucket', undef, 'expires', 'headers' ],
     'put_bucket_url';
 
-is_deeply +$s3->delete_object_url('bucket', 'object', 'headers', 'expires'),
-    [ $s3, 'DELETE', 'bucket', 'object', 'headers', undef, 'expires' ],
+is_deeply +$s3->delete_object_url('bucket', 'object', 'expires', 'headers'),
+    [ $s3, 'DELETE', 'bucket', 'object', 'expires', 'headers' ],
     'delete_object_url';
 
-is_deeply +$s3->get_object_url('bucket', 'object', 'headers', 'parameters', 'expires'),
-    [ $s3, 'GET', 'bucket', 'object', 'headers', 'parameters', 'expires' ],
+is_deeply +$s3->get_object_url('bucket', 'object', 'expires', 'headers', 'parameters'),
+    [ $s3, 'GET', 'bucket', 'object', 'expires', 'headers', 'parameters' ],
     'get_object_url';
 
-is_deeply +$s3->head_object_url('bucket', 'object', 'headers', 'expires'),
-    [ $s3, 'HEAD', 'bucket', 'object', 'headers', undef, 'expires' ],
+is_deeply +$s3->head_object_url('bucket', 'object', 'expires', 'headers'),
+    [ $s3, 'HEAD', 'bucket', 'object', 'expires', 'headers' ],
     'head_object_url';
 
-is_deeply +$s3->put_object_url('bucket', 'object', 'headers', 'expires'),
-    [ $s3, 'PUT', 'bucket', 'object', 'headers', undef, 'expires' ],
+is_deeply +$s3->put_object_url('bucket', 'object', 'expires', 'headers'),
+    [ $s3, 'PUT', 'bucket', 'object', 'expires', 'headers' ],
     'put_object_url';
 
 done_testing;

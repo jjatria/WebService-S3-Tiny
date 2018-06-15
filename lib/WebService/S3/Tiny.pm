@@ -75,17 +75,17 @@ sub request {
     );
 }
 
-sub delete_bucket_url { $_[0]->signed_url( 'DELETE', $_[1], undef, $_[2], undef, $_[3] ) }
+sub delete_bucket_url { $_[0]->signed_url( 'DELETE', $_[1], undef, $_[2], $_[3]        ) }
 sub    get_bucket_url { $_[0]->signed_url( 'GET',    $_[1], undef, $_[2], $_[3], $_[4] ) }
-sub   head_bucket_url { $_[0]->signed_url( 'HEAD',   $_[1], undef, $_[2], undef, $_[3] ) }
-sub    put_bucket_url { $_[0]->signed_url( 'PUT',    $_[1], undef, $_[2], undef, $_[3] ) }
-sub delete_object_url { $_[0]->signed_url( 'DELETE', $_[1], $_[2], $_[3], undef, $_[4] ) }
+sub   head_bucket_url { $_[0]->signed_url( 'HEAD',   $_[1], undef, $_[2], $_[3]        ) }
+sub    put_bucket_url { $_[0]->signed_url( 'PUT',    $_[1], undef, $_[2], $_[3]        ) }
+sub delete_object_url { $_[0]->signed_url( 'DELETE', $_[1], $_[2], $_[3], $_[4]        ) }
 sub    get_object_url { $_[0]->signed_url( 'GET',    $_[1], $_[2], $_[3], $_[4], $_[5] ) }
-sub   head_object_url { $_[0]->signed_url( 'HEAD',   $_[1], $_[2], $_[3], undef, $_[4] ) }
-sub    put_object_url { $_[0]->signed_url( 'PUT',    $_[1], $_[2], $_[3], undef, $_[4] ) }
+sub   head_object_url { $_[0]->signed_url( 'HEAD',   $_[1], $_[2], $_[3], $_[4]        ) }
+sub    put_object_url { $_[0]->signed_url( 'PUT',    $_[1], $_[2], $_[3], $_[4]        ) }
 
 sub signed_url {
-    my ( $self, $method, $bucket, $object, $headers, $query, $expires ) = @_;
+    my ( $self, $method, $bucket, $object, $expires, $headers, $query ) = @_;
     $expires //= 604800; # One week, maximum
 
     $headers //= {};

@@ -35,9 +35,10 @@ also be called with the C<_url> suffix to generate a pre-signed URL for the
 corresponding call.
 
 These URL methods take almost the same arguments as their request counterparts,
-with the difference that they do not take a C<content> argument, and take a
-final optional argument to indicate the lifetime of the URL in seconds.
-This value cannot be longer than 604800 (= one week).
+with the difference that they take an optional argument to indicate the lifetime
+of the URL in seconds. This argument always comes after the bucket and object, and
+before the header and parameter references. This value cannot be greater than
+604800 (= one week).
 
 =head2 new
 
@@ -102,9 +103,51 @@ This value cannot be longer than 604800 (= one week).
 
  $s3->request($method, $bucket, $object, $content, \%headers, \%parameters);
 
+=head2 delete_bucket_url
+
+ $s3->delete_bucket_url($bucket, $expires);
+ $s3->delete_bucket_url($bucket, $expires, \%headers);
+
+=head2 get_bucket_url
+
+ $s3->get_bucket_url($bucket, $expires);
+ $s3->get_bucket_url($bucket, $expires, \%headers);
+ $s3->get_bucket_url($bucket, $expires, \%headers, \%parameters);
+
+=head2 head_bucket_url
+
+ $s3->head_bucket_url($bucket, $expires);
+ $s3->head_bucket_url($bucket, $expires, \%headers);
+
+=head2 put_bucket_url
+
+ $s3->put_bucket_url($bucket, $expires);
+ $s3->put_bucket_url($bucket, $expires, \%headers);
+
+=head2 delete_object_url
+
+ $s3->delete_object_url($bucket, $object, $expires);
+ $s3->delete_object_url($bucket, $object, $expires, \%headers);
+
+=head2 get_object_url
+
+ $s3->get_object_url($bucket, $object, $expires);
+ $s3->get_object_url($bucket, $object, $expires, \%headers);
+ $s3->get_object_url($bucket, $object, $expires, \%headers, \%parameters);
+
+=head2 head_object_url
+
+ $s3->head_object_url($bucket, $object, $expires);
+ $s3->head_object_url($bucket, $object, $expires, \%headers);
+
+=head2 put_object_url
+
+ $s3->put_object_url($bucket, $object, $expires);
+ $s3->put_object_url($bucket, $object, $expires, \%headers);
+
 =head2 signed_url
 
- $s3->signed_url($method, $bucket, $object, $content, \%headers, \%parameters, $expires);
+ $s3->signed_url($method, $bucket, $object, $expires, \%headers, \%parameters );
 
 =head1 COPYRIGHT AND LICENSE
 
