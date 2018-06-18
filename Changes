@@ -1,4 +1,4 @@
-{{$NEXT}}
+0.003 2018-06-18
     - Add signed_url and related *_url method variants
 0.002 2018-05-16
     - Bump HTTP::Tiny because of using www_form_urlencode().
